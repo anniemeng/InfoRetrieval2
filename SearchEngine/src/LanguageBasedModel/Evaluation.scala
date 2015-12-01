@@ -6,10 +6,6 @@ import scala.io.Source
 
 object Evaluation {
   def evaluate(heaps: mutable.ArrayBuffer[mutable.PriorityQueue[(Double,String)]]) : Unit = {
-<<<<<<< HEAD
-=======
-    
->>>>>>> f3b2889a9c0fbba83bea68d4ed1eca9f10a3ca2c
     var counter : Int = 0
     var Precision : Double = 0.0
     var Recall : Double = 0.0
