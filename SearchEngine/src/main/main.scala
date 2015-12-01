@@ -141,6 +141,7 @@ object main {
 
     // query terms freq for WHOLE document collection - LANG MODEL
     val queryTermsFreqTotal = mutable.LinkedHashMap[String, Int]()
+    queryTerms.foreach { t => queryTermsFreqTotal(t) = 0 }
 
     // number of documents that have each query term for WHOLE document - TERM MODEL
     val queryTermsNumDocuments = mutable.LinkedHashMap[String, mutable.LinkedHashMap[String, Int]]()
