@@ -37,9 +37,10 @@ object Evaluation {
       docs_scanned = 0
       
       while(line  != null && query_id == qrels(0)){
+        val doc : String = qrels(2).filter(_.isLetterOrDigit)
         if(qrels(3) == "1"){
           RelevantDocs += 1 //(TP+FN)
-          qrel_docs += qrels(2)
+          qrel_docs += doc
         }
         line = buffRead.readLine()
         if(line != null)
