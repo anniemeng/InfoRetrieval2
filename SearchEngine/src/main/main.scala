@@ -14,13 +14,56 @@ import collection.mutable.MutableList
 import scala.collection.mutable
 
 object main {
+
+  // binary relevance judgement
+  def qrels(topicNumToTitle: mutable.LinkedHashMap[String, String]): Unit = {
+    val qrelStream = DocStream.getStream("Tipster/qrels")
+    val qrels = scala.io.Source.fromInputStream(qrelStream).getLines()
+
+
+    val topicToRelevant = mutable.LinkedHashMap[String, mutable.MutableList[String]]()
+    val topicToIrrelevant = mutable.LinkedHashMap[String, mutable.MutableList[String]]()
+    for (qrel <- qrels) {
+      val values = qrel.split(" ")
+      val topic = values(0)
+      val docId = values(2)
+      val relevant = values(3)
+
+      if (relevant == "1") {
+        var existing = topicToRelevant.getOrElse(topic, mutable.MutableList[String]())
+        existing += docId
+        topicToRelevant(topic) = existing
+      } else {
+        var existing = topicToIrrelevant.getOrElse(topic, mutable.MutableList[String]())
+        existing += docId
+        topicToIrrelevant(topic) = existing
+      }
+    }
+
+    /************* TESTING QRELS *****************/
+    for ((topicNum, topicTitle) <- topicNumToTitle) {
+      println("topic num: " + topicNum)
+      println("topic: " + topicTitle)
+      println("relevant: ")
+      for (relevant <- topicToRelevant.getOrElse(topicNum, mutable.MutableList[String]())) {
+        println(relevant)
+      }
+
+      println("irrelevant")
+      for (irrelevant <- topicToIrrelevant.getOrElse(topicNum, mutable.MutableList[String]())) {
+        println(irrelevant)
+      }
+      println("")
+    }
+  }
+
   def main(args: Array[String]) {
 
     // TODO: let user specify how many n best queries they want
 
     /************* TESTING - WRITE OUTPUT TO FILE  *****************/
-    val file = new File("output.txt")
-    val bw = new BufferedWriter(new FileWriter(file))
+    //val file = new File("output.txt")
+    //val bw = new BufferedWriter(new FileWriter(file))
 
     // 1) GATHERING QUERIES
     val topicStream = DocStream.getStream("Tipster/topics_small_57")
@@ -34,7 +77,7 @@ object main {
 
       if (numParts.length > 1 && topicParts.length > 1) {
         // get topic number and query
-        val num = numParts(1).split("\n")(0).trim()
+        val num = numParts(1).split("\n")(0).trim().substring(1)
         val title = topicParts(1).split("\n")(0).trim()
         topicNumToTitle(num) = title
 
@@ -45,6 +88,12 @@ object main {
         }
       }
     }
+
+    /************* TESTING - QRELS  *****************/
+    /*
+    qrels(topicNumToTitle)
+    return
+    */
 
     /************* TESTING 1) *****************/
     /*
@@ -63,7 +112,7 @@ object main {
     */
 
     // 2) PROCESS DOCUMENT STREAM
-    val tipster = new TipsterStream("Tipster/zips")
+    var tipster = new TipsterCorpusIterator("Tipster/zips")
     println("Number of files in zips = " + tipster.length)
 
     val sw = new StopWatch
@@ -75,7 +124,8 @@ object main {
      */
     var numWordsCollection = 0
     val queryTermsFreqTotal = mutable.LinkedHashMap[String, Int]() // query terms freq for WHOLE document collection
-    for (doc <- tipster.stream) {
+    while(tipster.hasNext){
+      val doc = tipster.next()
       // total number of words in collection
       numWordsCollection += doc.tokens.length
 
@@ -112,9 +162,11 @@ object main {
 
     /************* TESTING SECOND PASS *****************/
     // check if it matches total counts
-    val testQueryTerms = mutable.LinkedHashMap[String, Int]()
+    //val testQueryTerms = mutable.LinkedHashMap[String, Int]()
 
-    for (doc <- tipster.stream) {
+    tipster = new TipsterCorpusIterator("Tipster/zips")
+    while (tipster.hasNext) {
+      val doc = tipster.next()
       // get word count of document
       val numWordsDoc = doc.tokens.length
 
@@ -141,24 +193,28 @@ object main {
       println("num words in doc: " + numWordsDoc)
       println("doc id: " + docId)
       */
+      /*
       for ((_, map) <- queryTermsToFreq) {
         for ((term, freq) <- map) {
           val count = testQueryTerms.getOrElse(term, 0)
           testQueryTerms(term) = count + freq
         }
       }
+      */
     }
 
     sw2.stop
     println("Stopped time = " + sw2.stopped)
     /************* TESTING SECOND PASS *****************/
+    /*
     for ((term, freq) <- testQueryTerms) {
-      bw.write(term + ": " + freq)
+      bw.write(term + ": " + freq + "\n")
     }
+    */
 
     /************* TESTING - WRITE OUTPUT TO FILE  *****************/
-    bw.close()
-    return
+    //bw.close()
+    //return
 
     // TODO: output results to a file - esp when given final 10 test queries
 
@@ -178,5 +234,6 @@ object main {
 //    println(prLang.relevIdx.mkString(" "))
 //    println(prLang.precs.mkString(" "))
 //    println(prLang.iprecs.mkString(" "))
+
   }
 }
