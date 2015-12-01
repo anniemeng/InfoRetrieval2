@@ -132,7 +132,10 @@ object main {
       // query term frequency
       // frequency of all tokens in document
       val tfs : Map[String,Int]= doc.tokens.groupBy(identity).mapValues(l => l.length)
-
+      // log frequency of all tokens in document
+      val sum = tfs.values.sum.toDouble
+      val logtf : Map[String,Double] = tfs.mapValues( v => log2( (v.toDouble+1.0) / sum) )
+      
       // filter map of all tokens to only those in query
       val qtfs = tfs.filterKeys(queryTerms)
       for ((queryTerm, freq) <- qtfs) {
@@ -236,4 +239,7 @@ object main {
 //    println(prLang.iprecs.mkString(" "))
 
   }
+  
+  def log2(x: Double) = scala.math.log(x)/scala.math.log(2)
+  
 }
