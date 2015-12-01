@@ -303,6 +303,6 @@ object main {
     Evaluation.evaluate(minHeapsLang)
 
   }
-  
+
   def log2 (x: Double) = scala.math.log10(x) / scala.math.log10(2.0)
 }
