@@ -17,6 +17,7 @@ import LanguageBasedModel._
 
 object main {
   var minHeapsLang = new mutable.ArrayBuffer[mutable.PriorityQueue[(Double,String)]]()
+  var minHeapsTerm = new mutable.ArrayBuffer[mutable.PriorityQueue[(Double,String)]]()
 
   // binary relevance judgement
   /*
@@ -98,10 +99,14 @@ object main {
     // Initialize min heaps for each query
     val query_count = topicNumToTitle.size
     for (i <- 1 to query_count){
-      var heap = mutable.PriorityQueue.empty[(Double, String)](
+      var heapLang = mutable.PriorityQueue.empty[(Double, String)](
                   implicitly[Ordering[(Double, String)]].reverse
                  )
-      this.minHeapsLang += heap
+      var heapTerm = mutable.PriorityQueue.empty[(Double, String)](
+                  implicitly[Ordering[(Double, String)]].reverse
+                 )
+      this.minHeapsLang += heapLang
+      this.minHeapsTerm += heapTerm
     }
 
     /************* TESTING - QRELS  *****************/

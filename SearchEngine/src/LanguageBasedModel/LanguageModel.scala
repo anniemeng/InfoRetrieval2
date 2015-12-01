@@ -15,9 +15,10 @@ object LanguageModel {
       // println(query)
 
       // score each document
-      var Score : Double = 1.0
+      var Score : Double = 0.0
       for((term, freq) <- occurence){
-        Score = Score * (1-lambda) * (freq.toDouble/doc_word_count) + lambda * (wordmap.getOrElse(term, 0).toDouble/coll_word_count)
+        Score = Score + main.log2(1 + (1-lambda) * (freq.toDouble/doc_word_count) + 
+            lambda * (wordmap.getOrElse(term, 0).toDouble/coll_word_count))
       }
       //println("Document "+doc_id+" scored "+Score+" with query "+query)
 
