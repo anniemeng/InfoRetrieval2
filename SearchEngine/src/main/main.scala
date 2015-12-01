@@ -246,6 +246,6 @@ object main {
 
   }
   
-  def log2(x: Double) = scala.math.log(x)/scala.math.log(2)
+  def log2 (x: Double) = scala.math.log10(x) / scala.math.log10(2.0)
   
 }
