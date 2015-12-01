@@ -1,14 +1,17 @@
 package TermBasedModel
 
+import main._
+
 import collection.mutable.LinkedHashMap
 import scala.collection.mutable
 
 class TFIDFScore {
   
-  // input: tf(w,d), df(w), n
+  // input: tf(w,d), df(w), n, doc_id
   def score(tfs: mutable.LinkedHashMap[String, Map[String, Int]],
             dfs: mutable.LinkedHashMap[String, Map[String, Int]],
-            docsN: Int): LinkedHashMap[String, Double] = {
+            docsN: Int,
+            doc_id: String) {
     
     // val rdfs =
     
@@ -21,7 +24,22 @@ class TFIDFScore {
       }
       lm(q) = sumTFIDF
     }
-    lm
+    
+    var counter = 0
+    for ((q, score) <- lm) {
+      // update the min heap
+      val heap_size = main.minHeapsTerm(counter).size
+      if (heap_size < 100) {
+        main.minHeapsTerm(counter) += Tuple2(score, doc_id)
+      } else {
+        val testScore = main.minHeapsTerm(counter).head._1
+        if (score > testScore) {
+          main.minHeapsTerm(counter) += Tuple2(score,doc_id)
+          main.minHeapsTerm(counter).dequeue()
+        }
+      }
+      counter += 1
+    }
   }
   
   def log2 (x: Double) = scala.math.log10(x) / scala.math.log10(2.0)
