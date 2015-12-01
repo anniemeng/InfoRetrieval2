@@ -3,27 +3,37 @@ package LanguageBasedModel
 import scala.collection.mutable
 import main._
 
-class LanguageModel {
-  def smoothing(qmap : mutable.LinkedHashMap[String, Map[String, Int]], doc_id : String, wordmap : mutable.LinkedHashMap[String, Int], doc_word_count : Int, coll_word_count : Int ): Unit = {
-    
-    var lambda = 0.5//Tune it
+object LanguageModel {
+  def smoothing(qmap : mutable.LinkedHashMap[String, Map[String, Int]],
+                doc_id : String,
+                wordmap : mutable.LinkedHashMap[String, Int],
+                doc_word_count : Int,
+                coll_word_count : Int ): Unit = {
+    var lambda = 0.5 //TODO:Tune it
     var counter = 0
-    for((query,occurence) <- qmap){
-      println(query)
-      var Score : Double = 1
-      for((term,freq) <- occurence){
-        Score = Score * ((1-lambda)*(freq.toDouble/doc_word_count) + (lambda)*(wordmap(term).toFloat/coll_word_count))
+    for((query, occurence) <- qmap){
+      // println(query)
+
+      // score each document
+      var Score : Double = 1.0
+      for((term, freq) <- occurence){
+        Score = Score * (1-lambda) * (freq.toDouble/doc_word_count) + lambda * (wordmap.getOrElse(term, 0).toDouble/coll_word_count)
       }
-      println("Document "+doc_id+" scored "+Score+" with query "+query)
-      main.maxHeap(counter) += Tuple2(Score,doc_id)
-      var heap_size = main.maxHeap(counter).size;
-      if(heap_size > 100){
-        main.maxHeap(counter) = main.maxHeap(counter).dropRight(100)
+      //println("Document "+doc_id+" scored "+Score+" with query "+query)
+
+      // update the min heap
+      val heap_size = main.minHeapsLang(counter).size
+      if (heap_size < 100) {
+        main.minHeapsLang(counter) += Tuple2(Score, doc_id)
+      } else {
+        val testScore = main.minHeapsLang(counter).head._1
+        if (Score > testScore) {
+          main.minHeapsLang(counter) += Tuple2(Score,doc_id)
+          main.minHeapsLang(counter).dequeue()
+        }
       }
       counter += 1
     }
-   
-    Evaluation.evaluate(main.maxHeap)
     
   }
 }
