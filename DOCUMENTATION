@@ -1,0 +1,52 @@
+DOCUMENTATION
+
+GENERAL
+Given a list of queries and a document collection, want to determine the top 100 most relevant documents for the query
+
+GIVEN
+topics - a collection that makes up 40 queries -> want to get the topic number and the title (query itself)
+qrels - assessment of relevance -> for each topic/query, says if a document is relevant or not
+zip  - whole Tipster document collection that we want to run queries on
+
+ALGORITHM
+----------
+1) Get the queries
+	- parse topics file for the "num" and "title" fields 
+	- the "num" is used for qrels, and the "title" is an actual query
+
+	- create topicNumToTitle, queryTerms
+
+2) Process document stream first pass
+	- gathers higher level data about the document collection
+	- finds totalNumWords: total number of words in the whole document collection
+	- finds queryTermsFreqTotal - maps query terms to frequency: collects frequency of query terms in whole document collection
+
+3) Process document stream second pass
+	- gathers document specific data to pass to models
+	- finds number of words in document (for lang model)
+	- finds queryTermsToFreq: maps each query to frequency of each term in the query (for lang model)
+	- finds doc id (for lang model)
+
+	- MODEL WORK: pass this document specific data, and previously computed higher level data to models
+	- language model:
+		- pass queryTermsToFreq, doc id, queryTermsFreqTotal (from first pass), numWordsInDoc, numWordsInCollection
+		- return Heap of top 100 for each query
+
+	- term model: 
+		- pass TBD
+		- return Heap of top 100 for each query
+
+4) Compute Statistics
+	- compare the results to the qrels and compute statistics TBD
+
+DATA STRUCTURES
+----------------
+topicNumToTitle - maps the topic number to the title (query)
+queryTerms - set of all the words in all the queries
+
+queryTermsFreqTotal - frequency of each term in all the queries for the WHOLE document collection
+	- irrespective of query, so don't map query to these, but just keep track of frequencies of all terms in the query
+
+for each document:
+	- queryTermsToFreq: query -> (term in query -> freq)
+		- want to keep the mapping of query terms -> freq to their respective query so need for nested map
