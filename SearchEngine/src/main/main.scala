@@ -133,6 +133,7 @@ object main {
       // frequency of all tokens in document
       val tfs : Map[String,Int]= doc.tokens.groupBy(identity).mapValues(l => l.length)
       // log frequency of all tokens in document
+      // TODO: consider other transformations like square root
       val sum = tfs.values.sum.toDouble
       val logtf : Map[String,Double] = tfs.mapValues( v => log2( (v.toDouble+1.0) / sum) )
       
