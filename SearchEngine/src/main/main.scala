@@ -93,6 +93,8 @@ object main {
       }
     }
 
+    // TODO: replace query terms non-alphanumeric terms
+
     // Initialize min heaps for each query
     val query_count = topicNumToTitle.size
     for (i <- 1 to query_count){
@@ -172,9 +174,10 @@ object main {
         val qterms = topic.split(" ")
         val map = queryTermsNumDocuments.getOrElse(topic, mutable.LinkedHashMap[String, Int]())
         for (term <- qterms) {
-          if (qtfs.getOrElse(term, 0) > 0) {
-            val curr = map.getOrElse(term, 0)
-            map(term) = curr + 1
+          val termNew = term.replaceAll("[^A-Za-z0-9]", "")
+          if (qtfs.getOrElse(termNew, 0) > 0) {
+            val curr = map.getOrElse(termNew, 0)
+            map(termNew) = curr + 1
           }
         }
         queryTermsNumDocuments(topic) = map
@@ -234,13 +237,15 @@ object main {
       // filter map of all tokens to only those in query
       for ((_, topic) <- topicNumToTitle) {
         val qterms = topic.split(" ")
-        val qtfs = tfs.filterKeys(qterms.toSet)
+        val qtermsModify = for (qterm <- qterms) yield qterm.replaceAll("[^A-Za-z0-9]", "")
+        val qtfs = tfs.filterKeys(qtermsModify.toSet)
         queryTermsToFreq(topic) = qtfs
       }
 
       val docId = doc.name
       // PASS TO MODEL
       LanguageModel.smoothing(queryTermsToFreq, docId, queryTermsFreqTotal, numWordsDoc, numWordsCollection)
+      // pass queryTermsToFreq, queryTermsNumDocuments, docId, (numDocuments)
 
       /************* TESTING SECOND PASS *****************/
       /*
@@ -272,34 +277,35 @@ object main {
     //return
 
     // TODO: output results to a file - esp when given final 10 test queries
+    /*
+    var heapCount = 1
+    for (minHeap <- minHeapsLang; (_, topics) <- topicsNumToTitle) {
+       val heapFile = new File("heaps-" + heapCount.toString() + ".txt")
+       val hbw = new BufferedWriter(new FileWriter(heapFile))
 
-
-    // TODO: relevance - P, R, F1, MAP
-//    val rel = new TipsterGroundTruth("Tipster/qrels").judgements.get("51").get.toSet
-//    val retTerm = alertsTermQueries(0).results.map(r => r.title)
-//    val retLang = alertsLangQueries(0).results.map(r => r.title)
-//    val prTerm = new PrecisionRecall(retTerm, rel)
-//    println("Term:")
-//    println(prTerm.relevIdx.mkString(" "))
-//    println(prTerm.precs.mkString(" "))
-//    println(prTerm.iprecs.mkString(" "))
-//
-//    val prLang = new PrecisionRecall(retLang, rel)
-//    println("Lang:")
-//    println(prLang.relevIdx.mkString(" "))
-//    println(prLang.precs.mkString(" "))
-//    println(prLang.iprecs.mkString(" "))
+       hbw.write("query: " + topics + "\n")
+       for (doc <- minHeap.takeRight(100) {
+        hbw.write(doc._2 + "\n")
+       }
+       heapCount += 1
+    }
+     */
 
     /************* TESTING - LANG HEAP  *****************/
     val heapFile = new File("heaps.txt")
     val hbw = new BufferedWriter(new FileWriter(heapFile))
-    for (minHeap <- minHeapsLang; (_, topics) <- topicNumToTitle) {
+    var heapNum = 0
+    for ((_, topics) <- topicNumToTitle) {
+      val minHeap = minHeapsLang(heapNum)
       hbw.write("query: " + topics + "\n")
-      for (doc <- minHeap.take(10)) {
-        hbw.write(doc._2)
+      for (doc <- minHeap.takeRight(100)) {
+        hbw.write(doc._2 + "\n")
       }
       hbw.write("\n")
+      heapNum += 1
     }
+
+    println("printed heaps")
     Evaluation.evaluate(minHeapsLang)
 
   }

@@ -1,12 +1,11 @@
 package LanguageBasedModel
 
 import scala.collection.mutable
-import java.io._;
+import java.io._
 import scala.io.Source
 
 object Evaluation {
   def evaluate(heaps: mutable.ArrayBuffer[mutable.PriorityQueue[(Double,String)]]) : Unit = {
-    println("Hi");
     var counter : Int = 0
     var Precision : Double = 0.0
     var Recall : Double = 0.0
@@ -22,7 +21,7 @@ object Evaluation {
     for(heap <- heaps)
       docs_retrieved ::= heap.toList.flatMap{case (a,b) => List(b)}
          
-    val buffRead = new BufferedReader(new FileReader("qrels2")) 
+    val buffRead = new BufferedReader(new FileReader("Tipster/qrels"))
     var line : String = buffRead.readLine()
     var qrels = line.split(" ")
     while (line != null){
@@ -34,7 +33,7 @@ object Evaluation {
       while(line  != null && query_id == qrels(0)){
         if(qrels(3) == "1"){
           RelevantDocs += 1 //(TP+FN)
-          qrel_docs += qrels(2)
+          qrel_docs += qrels(2).filter(_.isLetterOrDigit)
         }
         line = buffRead.readLine()
         if(line != null)
@@ -45,7 +44,7 @@ object Evaluation {
       var avgPrecision : Double = 0.0
       while(iterator.hasNext){
         docs_scanned += 1
-        if(qrel_docs.contains(iterator.next)){
+        if(qrel_docs.contains(iterator.next())){
           RetrievedRelevant += 1 //(TP)
           avgPrecision += (RetrievedRelevant.toDouble/docs_scanned)
         }
@@ -53,17 +52,17 @@ object Evaluation {
       avgPrecision = avgPrecision/RetrievedRelevant
       MAP += avgPrecision
       counter += 1
-      Precision = (RetrievedRelevant.toDouble/docs_scanned)
-      Recall = (RetrievedRelevant.toDouble/RelevantDocs)
+      Precision = RetrievedRelevant.toDouble/docs_scanned
+      Recall = RetrievedRelevant.toDouble/RelevantDocs
       F1 = ((Beta*Beta+1)*Precision*Recall)/(Beta*Beta*Precision+Recall)
-      val fw = new FileWriter("Evaluation.txt",true);
-      fw.write("Query: "+query_id+"\n");
-      fw.write("Precision: "+Precision+"\n");
-      fw.write("Recall: "+Recall+"\n");
-      fw.write("F1: "+F1+"\n");
+      val fw = new FileWriter("Evaluation.txt",true)
+      fw.write("Query: "+query_id+"\n")
+      fw.write("Precision: "+Precision+"\n")
+      fw.write("Recall: "+Recall+"\n")
+      fw.write("F1: "+F1+"\n")
       fw.close()
     }
     MAP = MAP.toDouble/docs_retrieved.size
-    println("MAP: "+MAP);
+    println("MAP: "+MAP)
   }
 }
