@@ -148,6 +148,7 @@ object main {
 
     // query terms freq for WHOLE document collection - LANG MODEL
     val queryTermsFreqTotal = mutable.LinkedHashMap[String, Int]()
+    queryTerms.foreach { t => queryTermsFreqTotal(t) = 0 }
 
     // number of documents that have each query term for WHOLE document - TERM MODEL
     val queryTermsNumDocuments = mutable.LinkedHashMap[String, mutable.LinkedHashMap[String, Int]]()
@@ -249,7 +250,7 @@ object main {
 
       // get frequency of each term for query terms
       // for each query, get a word in the query -> frequency
-      val queryTermsToFreq = mutable.LinkedHashMap[String, Map[String, Int]]()
+      val queryTermsToFreq = mutable.LinkedHashMap[String, MutMap[String, Int]]()
 
       // frequency of all tokens in document
       val tfs : Map[String,Int]= doc.tokens.groupBy(identity).mapValues(l => l.length)
@@ -258,8 +259,9 @@ object main {
       for ((_, topic) <- topicNumToTitle) {
         val qterms = topic.split(" ")
         val qtermsModify = for (qterm <- qterms) yield qterm.replaceAll("[^A-Za-z0-9]", "")
-        val qtfs = tfs.filterKeys(qtermsModify.toSet)
-
+        val qtfs = MutMap[String, Int]()
+        qtermsModify.foreach { q => qtfs(q) = 0 }
+        tfs.filter(qtermsModify.toSet).foreach{case (k,v) => qtfs(k) = v}
         queryTermsToFreq(topic) = qtfs
       }
 

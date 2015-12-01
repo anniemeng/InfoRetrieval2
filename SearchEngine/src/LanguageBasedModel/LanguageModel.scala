@@ -4,7 +4,7 @@ import scala.collection.mutable
 import main._
 
 object LanguageModel {
-  def smoothing(qmap : mutable.LinkedHashMap[String, Map[String, Int]],
+  def smoothing(qmap : mutable.LinkedHashMap[String, mutable.Map[String, Int]],
                 doc_id : String,
                 wordmap : mutable.LinkedHashMap[String, Int],
                 doc_word_count : Int,
