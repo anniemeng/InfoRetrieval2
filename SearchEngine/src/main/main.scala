@@ -1,6 +1,7 @@
 package main
 
 import java.io.{FileInputStream, BufferedInputStream}
+import java.io._
 
 import Parsing._
 import LanguageBasedModel._
@@ -16,6 +17,10 @@ object main {
   def main(args: Array[String]) {
 
     // TODO: let user specify how many n best queries they want
+
+    /************* TESTING - WRITE OUTPUT TO FILE  *****************/
+    val file = new File("output.txt")
+    val bw = new BufferedWriter(new FileWriter(file))
 
     // 1) GATHERING QUERIES
     val topicStream = DocStream.getStream("Tipster/topics_small_57")
@@ -58,7 +63,7 @@ object main {
     */
 
     // 2) PROCESS DOCUMENT STREAM
-    val tipster = new TipsterStream("Tipster/zips-1")
+    val tipster = new TipsterStream("Tipster/zips")
     println("Number of files in zips = " + tipster.length)
 
     val sw = new StopWatch
@@ -107,7 +112,7 @@ object main {
 
     /************* TESTING SECOND PASS *****************/
     // check if it matches total counts
-    //val testQueryTerms = mutable.LinkedHashMap[String, Int]()
+    val testQueryTerms = mutable.LinkedHashMap[String, Int]()
 
     for (doc <- tipster.stream) {
       // get word count of document
@@ -135,24 +140,25 @@ object main {
       /*
       println("num words in doc: " + numWordsDoc)
       println("doc id: " + docId)
+      */
       for ((_, map) <- queryTermsToFreq) {
         for ((term, freq) <- map) {
           val count = testQueryTerms.getOrElse(term, 0)
           testQueryTerms(term) = count + freq
         }
       }
-      */
     }
 
     sw2.stop
     println("Stopped time = " + sw2.stopped)
     /************* TESTING SECOND PASS *****************/
-    /*
     for ((term, freq) <- testQueryTerms) {
-      println(term + ": " + freq)
+      bw.write(term + ": " + freq)
     }
+
+    /************* TESTING - WRITE OUTPUT TO FILE  *****************/
+    bw.close()
     return
-    */
 
     // TODO: output results to a file - esp when given final 10 test queries
 
