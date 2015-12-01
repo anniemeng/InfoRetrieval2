@@ -12,9 +12,11 @@ import collection.mutable.{Map=>MutMap}
 import collection.mutable.LinkedHashMap
 import collection.mutable.MutableList
 import scala.collection.mutable
-
+import LanguageBasedModel._
 object main {
 
+  var maxHeap = new mutable.ArrayBuffer[mutable.PriorityQueue[(Double,String)]]()
+   
   // binary relevance judgement
   def qrels(topicNumToTitle: mutable.LinkedHashMap[String, String]): Unit = {
     val qrelStream = DocStream.getStream("Tipster/qrels")
@@ -88,7 +90,11 @@ object main {
         }
       }
     }
-
+    var query_count = 2
+    for(i <- 1 to query_count){
+      var heap = new mutable.PriorityQueue[(Double,String)]()
+      this.maxHeap += heap
+    }
     /************* TESTING - QRELS  *****************/
     /*
     qrels(topicNumToTitle)
@@ -189,7 +195,7 @@ object main {
 
       val docId = doc.name
       // PASS TO MODEL
-      // languageModel(queryTermsToFreq, docId, queryTermsFreqTotal, numWordsDoc, numWordsCollection)
+      LanguageModel.smoothing(queryTermsToFreq, docId, queryTermsFreqTotal, numWordsDoc, numWordsCollection)
 
       /************* TESTING SECOND PASS *****************/
       /*
