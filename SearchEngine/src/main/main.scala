@@ -29,7 +29,7 @@ object main {
     for (qrel <- qrels) {
       val values = qrel.split(" ")
       val topic = values(0)
-      val docId = values(2)
+      val docId = values(2).filter(_.isLetterOrDigit)
       val relevant = values(3)
 
       if (relevant == "1") {
