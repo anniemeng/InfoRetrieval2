@@ -7,8 +7,14 @@ import scala.collection.mutable
 
 object TFScore {
 
-  def score(tfs: mutable.LinkedHashMap[String, mutable.Map[String, Int]], doc_id: String) {
-    val scores = tfs.map{ case (q, m) => (q, m.foldLeft(0)(_+_._2)) }
+  def score(tfs: mutable.LinkedHashMap[String, mutable.Map[String, Double]],
+      tfsSum: Double,
+      doc_id: String) {
+    
+    //transform to ltfs:
+    tfs.mapValues(m => m.mapValues { v => log2( (v.toDouble+1.0) / tfsSum ) })
+    
+    val scores = tfs.map{ case (q, m) => (q, m.foldLeft(0.0)(_+_._2)) }
     
     var counter = 0
     for ((q, score) <- scores) {
@@ -25,7 +31,8 @@ object TFScore {
       }
       counter += 1
     }
-    
   }
   
+  def log2 (x: Double) = scala.math.log10(x) / scala.math.log10(2.0)
+
 }
