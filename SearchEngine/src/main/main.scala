@@ -20,6 +20,7 @@ object main {
   var minHeapsTerm = new mutable.ArrayBuffer[mutable.PriorityQueue[(Double,String)]]()
 
   // binary relevance judgement
+  /*
   def qrels(topicNumToTitle: mutable.LinkedHashMap[String, String]): Unit = {
     val qrelStream = DocStream.getStream("Tipster/qrels")
     val qrels = scala.io.Source.fromInputStream(qrelStream).getLines()
@@ -108,14 +109,27 @@ object main {
       if (TPFP != 0) {
         precision = relevantInHeap / TPFP
       }
+
       val recall = relevantInHeap / (relevantInHeap + FN)
 
       var precisionFrac = 0
+      var recallFrac = 0
       if (precision != 0) {
         precisionFrac = 1 / precision
       }
-      val f1 = 2 / (precisionFrac + (1 / recall))
-      val AP = numeratorAP / (relevantInHeap + FN)
+      if (recall != 0) {
+        recallFrac = 1 / recall
+      }
+
+      var f1 = 0
+      if (precisionFrac != 0 && recallFrac != 0) {
+        f1 = 2 / (precisionFrac + recallFrac)
+      }
+
+      var AP = 0
+      if (relevantInHeap + FN != 0) {
+        AP = numeratorAP / (relevantInHeap + FN)
+      }
       sumAPs += AP
 
       htbw.write("num relevant in heap: " + relevantInHeap + "\n")
@@ -131,7 +145,7 @@ object main {
     var MAP = sumAPs / topicNumToTitle.size
     htbw.write("MAP: " + MAP + "\n")
     htbw.close()
-  }
+  }*/
 
   def main(args: Array[String]) {
 
@@ -155,8 +169,8 @@ object main {
       if (numParts.length > 1 && topicParts.length > 1) {
         // get topic number and query
         val num = numParts(1).split("\n")(0).trim().substring(1) // strip the 0
-        val title = topicParts(1).split("\n")(0).trim()
-        val newTitle = title.replaceAll("[^A-Za-z0-9 .'\\/-]", "").replaceAll("[\\/-]", " ").replaceAll("  ", " ").replaceAll("  ", " ")
+        val title = topicParts(1).split("\n\n")(0).trim()
+        val newTitle = title.replaceAll("[^A-Za-z0-9 \n.'\\/-]", "").replaceAll("[\\/\n-]", " ").replaceAll("  ", " ").replaceAll("  ", " ").replaceAll("    ", " ")
         topicNumToTitle(num) = newTitle
 
         // collect query terms (individual words in each query) for general access later on
@@ -331,7 +345,7 @@ object main {
       }
 
       // PASS TO MODEL
-      //LanguageModel.smoothing(queryTermsToFreq, docId, queryTermsFreqTotal, numWordsDoc, numWordsCollection)
+      LanguageModel.smoothing(queryTermsToFreq, docId, queryTermsFreqTotal, numWordsDoc, numWordsCollection)
       //TFScore.score(queryTermsToFreq, docId)
       TFIDFScore.score(queryTermsToFreq, queryTermsNumDocuments, numDocuments, docId)
 
@@ -393,7 +407,6 @@ object main {
      */
 
     /************* TESTING - LANG HEAP  *****************/
-    /*
     val heapLangFile = new File("heapsLang.txt")
     val hlbw = new BufferedWriter(new FileWriter(heapLangFile))
     var heapNumLang = 0
@@ -407,7 +420,6 @@ object main {
       heapNumLang += 1
     }
     hlbw.close()
-    */
 
     /************* TESTING - TERM HEAP  *****************/
 
@@ -427,9 +439,9 @@ object main {
 
     println("printed heaps")
 
-    qrels(topicNumToTitle)
+    // qrels(topicNumToTitle)
 
-    //Evaluation.evaluate(minHeapsLang)
+    Evaluation.evaluate(minHeapsLang)
     Evaluation.evaluate(minHeapsTerm)
 
   }
