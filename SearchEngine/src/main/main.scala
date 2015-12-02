@@ -330,7 +330,7 @@ object main {
 
       // get frequency of each term for query terms
       // for each query, get a word in the query -> frequency
-      val queryTermsToFreq = mutable.LinkedHashMap[String, MutMap[String, Int]]()
+      val queryTermsToFreq = mutable.LinkedHashMap[String, MutMap[String, Double]]()
 
       // frequency of all tokens in document
       val tfs : Map[String,Int]= doc.tokens.groupBy(identity).mapValues(l => l.length)
@@ -338,16 +338,16 @@ object main {
       // filter map of all tokens to only those in query
       for ((_, topic) <- topicNumToTitle) {
         val qterms = topic.split(" ")
-        val qtfs = MutMap[String, Int]()
+        val qtfs = MutMap[String, Double]()
         qterms.foreach { q => qtfs(q) = 0 }
         tfs.filterKeys(qterms.toSet).foreach{case (k,v) => qtfs(k) = v}
         queryTermsToFreq(topic) = qtfs
       }
 
       // PASS TO MODEL
-      LanguageModel.smoothing(queryTermsToFreq, docId, queryTermsFreqTotal, numWordsDoc, numWordsCollection)
-      //TFScore.score(queryTermsToFreq, docId)
-      TFIDFScore.score(queryTermsToFreq, queryTermsNumDocuments, numDocuments, docId)
+      //LanguageModel.smoothing(queryTermsToFreq, docId, queryTermsFreqTotal, numWordsDoc, numWordsCollection)
+      TFScore.score(queryTermsToFreq, tfs.values.sum.toDouble, docId)
+      //TFIDFScore.score(queryTermsToFreq, queryTermsNumDocuments, numDocuments, docId)
 
       /************* TESTING SECOND PASS *****************/
       /*
@@ -407,7 +407,7 @@ object main {
      */
 
     /************* TESTING - LANG HEAP  *****************/
-    val heapLangFile = new File("heapsLang.txt")
+    /*val heapLangFile = new File("heapsLang.txt")
     val hlbw = new BufferedWriter(new FileWriter(heapLangFile))
     var heapNumLang = 0
     for ((_, topics) <- topicNumToTitle) {
@@ -420,7 +420,7 @@ object main {
       heapNumLang += 1
     }
     hlbw.close()
-
+    */
     /************* TESTING - TERM HEAP  *****************/
 
     val heapTermFile = new File("heapsTerm.txt")
@@ -441,7 +441,7 @@ object main {
 
     // qrels(topicNumToTitle)
 
-    Evaluation.evaluate(minHeapsLang)
+    //Evaluation.evaluate(minHeapsLang)
     Evaluation.evaluate(minHeapsTerm)
 
   }
