@@ -91,16 +91,30 @@ object main {
         }
 
         // AP/MAP calculation
-        val currPrecision = relevantInHeap / (relevantInHeap + irrelevantInHeap)
+        val TPFP = relevantInHeap + irrelevantInHeap
+
+        var currPrecision = 0
+        if (TPFP != 0) {
+          currPrecision = relevantInHeap / TPFP
+        }
         numeratorAP += pRel * currPrecision
       }
 
       // FN
       val FN = relevant.size - relevantInHeap
 
-      val precision = relevantInHeap / (relevantInHeap + irrelevantInHeap)
+      val TPFP = relevantInHeap + irrelevantInHeap
+      var precision = 0
+      if (TPFP != 0) {
+        precision = relevantInHeap / TPFP
+      }
       val recall = relevantInHeap / (relevantInHeap + FN)
-      val f1 = 2 / ((1 / precision) + (1 / recall))
+
+      var precisionFrac = 0
+      if (precision != 0) {
+        precisionFrac = 1 / precision
+      }
+      val f1 = 2 / (precisionFrac + (1 / recall))
       val AP = numeratorAP / (relevantInHeap + FN)
       sumAPs += AP
 
@@ -116,6 +130,7 @@ object main {
 
     var MAP = sumAPs / topicNumToTitle.size
     htbw.write("MAP: " + MAP + "\n")
+    htbw.close()
   }
 
   def main(args: Array[String]) {
@@ -141,6 +156,8 @@ object main {
         // get topic number and query
         val num = numParts(1).split("\n")(0).trim().substring(1) // strip the 0
         val title = topicParts(1).split("\n")(0).trim()
+        println("title before: " + title)
+        println("title after: " + title.replaceAll("[^A-Za-z0-9 ]", ""))
         topicNumToTitle(num) = title
 
         // collect query terms (individual words in each query) for general access later on
@@ -150,6 +167,9 @@ object main {
         }
       }
     }
+
+    // TESTING STRIPPING THE QUERY TERM
+    //return
 
     // Initialize min heaps for each query
     val query_count = topicNumToTitle.size
@@ -316,8 +336,8 @@ object main {
 
       // PASS TO MODEL
       //LanguageModel.smoothing(queryTermsToFreq, docId, queryTermsFreqTotal, numWordsDoc, numWordsCollection)
-      TFScore.score(queryTermsToFreq, docId)
-      // TFIDFScore.score(queryTermsToFreq, queryTermsNumDocuments, numDocuments, docId)
+      //TFScore.score(queryTermsToFreq, docId)
+      TFIDFScore.score(queryTermsToFreq, queryTermsNumDocuments, numDocuments, docId)
 
       /************* TESTING SECOND PASS *****************/
       /*
@@ -346,21 +366,34 @@ object main {
 
     // TODO: output results to a file - esp when given final 10 test queries
     /*
-    var heapCount = 1
     var heapNumTerm = 0
-    val minHeap = minHeapsLang(heapNumTerm)
-    val heapFile = new File("heaps-" + heapCount.toString() + ".txt")
+    var heapNumLang = 0
+    val heapTermFile = new File("ranking-t-12")
+    val heapLangFile = new File("ranking-l-12.run")
+    val htbw = new BufferedWriter(new FileWriter(heapTermFile))
+    val hlbw = new BufferedWriter(new FileWriter(heapLangFile))
     for ((num, topics) <- topicsNumToTitle) {
-       val hbw = new BufferedWriter(new FileWriter(heapFile))
+       val minHeapTerm = minHeapsTerm(heapNumTerm)
+       val minHeapLang = minHeapsLang(heapNumLang)
 
-       var rank = 1
-       for (doc <- minHeap.takeRight(100) {
-        hbw.write(num + " " + rank.toString + " " + doc._2 + "\n")
-        rank += 1
+       var rankT = 1
+       for (doc <- minHeapTerm.takeRight(100) {
+        htbw.write(num + " " + rank.toString + " " + doc._2 + "\n")
+        rankT += 1
        }
-       heapCount += 1
+
+       var rankL = 1
+       for (doc <- minHeapLang.takeRight(100) {
+        hlbw.write(num + " " + rank.toString + " " + doc._2 + "\n")
+        rankL += 1
+       }
+
        heapNumTerm += 1
+       heapNumLang += 1
     }
+    htbw.close()
+    hlbw.close()
+
      */
 
     /************* TESTING - LANG HEAP  *****************/
@@ -376,10 +409,12 @@ object main {
       }
       hlbw.write("\n")
       heapNumLang += 1
-    }*/
+    }
+    hlbw.close()
+    */
 
     /************* TESTING - TERM HEAP  *****************/
-    /*
+
     val heapTermFile = new File("heapsTerm.txt")
     val htbw = new BufferedWriter(new FileWriter(heapTermFile))
     var heapNumTerm = 0
@@ -392,14 +427,13 @@ object main {
       htbw.write("\n")
       heapNumTerm += 1
     }
-    */
+    htbw.close()
 
     println("printed heaps")
 
-    //println("done qrels")
-    //qrels(topicNumToTitle)
+    qrels(topicNumToTitle)
 
-    Evaluation.evaluate(minHeapsLang)
+    //Evaluation.evaluate(minHeapsLang)
     Evaluation.evaluate(minHeapsTerm)
 
   }
