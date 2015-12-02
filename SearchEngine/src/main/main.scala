@@ -22,8 +22,6 @@ object main {
 
   def main(args: Array[String]) {
 
-    // TODO: let user specify how many n best queries they want
-
     /******************************
      * 1) GATHERING QUERIES
      ********************************/
@@ -113,7 +111,7 @@ object main {
     queryTerms.foreach { t => queryTermsFreqTotal(t) = 0 }
 
     // number of documents that have each query term for WHOLE document - TERM MODEL
-    val queryTermsNumDocuments = mutable.LinkedHashMap[String, mutable.LinkedHashMap[String, Int]]()
+    val queryTermsNumDocuments = mutable.LinkedHashMap[String, mutable.LinkedHashMap[String, Double]]()
 
     val sw = new StopWatch
     sw.start
@@ -222,9 +220,9 @@ object main {
       }
 
       // PASS TO MODEL
-      //LanguageModel.smoothing(queryTermsToFreq, docId, queryTermsFreqTotal, numWordsDoc, numWordsCollection)
-      TFScore.score(queryTermsToFreq, tfs.values.sum.toDouble, docId)
-      //TFIDFScore.score(queryTermsToFreq, queryTermsNumDocuments, numDocuments, docId)
+      LanguageModel.smoothing(queryTermsToFreq, docId, queryTermsFreqTotal, numWordsDoc, numWordsCollection)
+      //TFScore.score(queryTermsToFreq, tfs.values.sum.toDouble, docId)
+      TFIDFScore.score(queryTermsToFreq, tfs.values.sum.toDouble, queryTermsNumDocuments, numDocuments, docId)
 
       /************* TESTING SECOND PASS *****************/
       /*
@@ -287,25 +285,31 @@ object main {
 
     for ((num, topics) <- topicNumToTitle) {
       // term
+      /*
       if (heapNumTerm == 0) {
         println("TERM:")
       }
+      */
 
       val minHeapTerm = minHeapsTerm(heapNumTerm)
       var rankT = 1
       val reverseHeapTerm = minHeapTerm.takeRight(100).reverse
       while (reverseHeapTerm.nonEmpty) {
         val doc = reverseHeapTerm.dequeue()
+        /*
         if (heapNumTerm == 0) {
           println(doc._2 + "score: " + doc._1)
         }
+        */
         htbw.write(num + " " + rankT.toString + " " + doc._2 + "\n")
         rankT += 1
       }
 
+      /*
       if (heapNumTerm == 0) {
         println("LANG:")
       }
+      */
 
        // lang
        val minHeapLang = minHeapsLang(heapNumLang)
@@ -314,9 +318,11 @@ object main {
        while(reverseHeapLang.nonEmpty) {
          val doc = reverseHeapLang.dequeue()
 
+         /*
          if (heapNumTerm == 0) {
            println(doc._2 + "score: " + doc._1)
          }
+         */
          hlbw.write(num + " " + rankL.toString + " " + doc._2 + "\n")
          rankL += 1
        }
@@ -360,7 +366,7 @@ object main {
     htbw.close()
     */
     println("printed heaps")
-    
+
     Evaluation.evaluate(minHeapsLang, "lang")
     Evaluation.evaluate(minHeapsTerm, "term")
   }
