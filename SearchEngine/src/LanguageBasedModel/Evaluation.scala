@@ -8,11 +8,14 @@ object Evaluation {
   def evaluate(heaps: mutable.ArrayBuffer[mutable.PriorityQueue[(Double,String)]]) : Unit = {
     var counter : Int = 0
     var Precision : Double = 0.0
+    var AvgPrecision : Double = 0.0
     var Recall : Double = 0.0
+    var AvgRecall : Double = 0.0
     var F1 : Double = 0.0
-    var avgPrecision : Double = 0.0
+    var AverageF1 : Double = 0.0
+    var avgPrecisionAtRank : Double = 0.0
     var MAP : Double = 0.0
-    var Alpha : Double = 0.0
+    var Alpha : Double = 0.5
     var Beta : Double = 1 - Alpha
     var RelevantDocs = 0
     var RetrievedRelevant = 0
@@ -40,7 +43,7 @@ object Evaluation {
       query_id = qrels(0)
       RelevantDocs = 0
       RetrievedRelevant = 0
-      avgPrecision = 0.0
+      avgPrecisionAtRank = 0.0
       docs_scanned = 0
       while(line  != null && query_id == qrels(0)){
         val doc : String = qrels(2).filter(_.isLetterOrDigit)
@@ -59,20 +62,23 @@ object Evaluation {
         docs_scanned += 1
         if(qrel_docs.contains(doc)){
           RetrievedRelevant += 1 //(TP)
-          avgPrecision += (RetrievedRelevant.toDouble/docs_scanned)
+          avgPrecisionAtRank += (RetrievedRelevant.toDouble/docs_scanned)
           //writer.write("Present!! "+RetrievedRelevant+"\n")
         }
       }
       if(RetrievedRelevant != 0)
-        avgPrecision = avgPrecision/RetrievedRelevant
-      MAP += avgPrecision
+        avgPrecisionAtRank = avgPrecisionAtRank/RetrievedRelevant
+      MAP += avgPrecisionAtRank
       counter += 1
       Precision = RetrievedRelevant.toDouble/docs_scanned
       Recall = RetrievedRelevant.toDouble/RelevantDocs
+      AvgPrecision += Precision
+      AvgRecall += Recall 
       if(Precision == 0 && Recall == 0)
         F1 = 0
       else
         F1 = ((Beta*Beta+1)*Precision*Recall)/(Beta*Beta*Precision+Recall)
+      AverageF1 += F1
       val fw = new FileWriter("Evaluation.txt",true)
       fw.write("Query: "+query_id+"\n")
       fw.write("Precision: "+Precision+"\n")
@@ -83,5 +89,9 @@ object Evaluation {
     //writer.close()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
     MAP = MAP.toDouble/docs_retrieved.size
     println("MAP: "+MAP)
+    println("AvgPrecision: "+AvgPrecision);
+    println("AvgRecall: "+AvgRecall);
+    println("AvgF1: "+AverageF1);
+    
   }
 }

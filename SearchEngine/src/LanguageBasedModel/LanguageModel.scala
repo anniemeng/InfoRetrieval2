@@ -10,7 +10,7 @@ object LanguageModel {
                 wordmap : mutable.LinkedHashMap[String, Int],
                 doc_word_count : Int,
                 coll_word_count : Int ): Unit = {
-    var lambda = 0.5 //TODO:Tune it
+    var JMlambda = 0.1 //Jelinek-Mercer
     var counter = 0
     //var writer : FileWriter  = new FileWriter("QueryInsight.txt",true)
     //writer.write("Coll_word: "+coll_word_count+"\n");
@@ -23,11 +23,12 @@ object LanguageModel {
       var Score : Double = 0.0
       //writer.write("Size :"+occurence.size+"\n");
       for((term, freq) <- occurence){
-        //writer.write("Term: "+term+" \n");
-        //writer.write("Freq: "+freq+" \n");
-        //writer.write("Word freq in coll: "+wordmap.getOrElse(term,0)+"\n")
-        Score = Score + main.log2(1 + (1-lambda) * (freq.toDouble/doc_word_count) + 
-            lambda * (wordmap.getOrElse(term, 0).toDouble/coll_word_count))
+        /*Score = Score + main.log2(1 + (1-JMlambda) * (freq.toDouble/doc_word_count) + 
+            (JMlambda) * (wordmap.getOrElse(term, 0).toDouble/coll_word_count))*/
+        var DirConst = 2000  
+        var DirichletDenom : Double = doc_word_count+DirConst
+        var DirichletNum : Double = freq+((DirConst)*(wordmap.getOrElse(term, 0).toDouble/coll_word_count))
+        Score = Score + main.log2(1+ (DirichletNum.toDouble/DirichletDenom))
       }
       //writer.write("Document "+doc_id+" scored "+Score+" with query "+query)
 
