@@ -3,7 +3,7 @@ package LanguageBasedModel
 import scala.collection.mutable
 import java.io._
 import scala.io.Source
-
+import scala.util.Sorting
 object Evaluation {
   def evaluate(heaps: mutable.ArrayBuffer[mutable.PriorityQueue[(Double,String)]]) : Unit = {
     var counter : Int = 0
@@ -17,12 +17,20 @@ object Evaluation {
     var RelevantDocs = 0
     var RetrievedRelevant = 0
     var query_id : String = ""
-    var docs_retrieved = List[List[String]]()
+    var docs_retrieved = new mutable.ArrayBuffer[mutable.ArrayBuffer[String]]()
     var docs_scanned : Int = 0
+    //var writer : FileWriter  = new FileWriter("EvaluateInsight.txt",true)
     
-    for(heap <- heaps)
-      docs_retrieved ::= heap.toList.flatMap{case (a,b) => List(b)}
-         
+    for(heap <- heaps){
+      val heap_list : List[(Double,String)] = heap.toList.sortWith(_._1 > _._1)
+      //writer.write("Docs "+heap_list+"\n")
+      var buf = heap_list.map( x => x._2).to[mutable.ArrayBuffer]
+      docs_retrieved += buf
+    }
+    
+    //writer.write("Docs: "+docs_retrieved+"\n");
+    
+      
     val buffRead = new BufferedReader(new FileReader("Tipster/qrels"))
     var line : String = buffRead.readLine()
     var qrels = line.split(" ")
@@ -34,9 +42,9 @@ object Evaluation {
       RetrievedRelevant = 0
       avgPrecision = 0.0
       docs_scanned = 0
-      
       while(line  != null && query_id == qrels(0)){
         val doc : String = qrels(2).filter(_.isLetterOrDigit)
+        //writer.write("Doc: "+doc+"\n")
         if(qrels(3) == "1"){
           RelevantDocs += 1 //(TP+FN)
           qrel_docs += doc
@@ -46,21 +54,25 @@ object Evaluation {
           qrels = line.split(" ")
       }
       
-      val iterator = docs_retrieved(counter).reverseIterator
-      
-      while(iterator.hasNext){
+      for(doc <- docs_retrieved(counter)){
+        //writer.write("Checking with doc :"+doc+"\n")
         docs_scanned += 1
-        if(qrel_docs.contains(iterator.next())){
+        if(qrel_docs.contains(doc)){
           RetrievedRelevant += 1 //(TP)
           avgPrecision += (RetrievedRelevant.toDouble/docs_scanned)
+          //writer.write("Present!! "+RetrievedRelevant+"\n")
         }
       }
-      avgPrecision = avgPrecision/RetrievedRelevant
+      if(RetrievedRelevant != 0)
+        avgPrecision = avgPrecision/RetrievedRelevant
       MAP += avgPrecision
       counter += 1
       Precision = RetrievedRelevant.toDouble/docs_scanned
       Recall = RetrievedRelevant.toDouble/RelevantDocs
-      F1 = ((Beta*Beta+1)*Precision*Recall)/(Beta*Beta*Precision+Recall)
+      if(Precision == 0 && Recall == 0)
+        F1 = 0
+      else
+        F1 = ((Beta*Beta+1)*Precision*Recall)/(Beta*Beta*Precision+Recall)
       val fw = new FileWriter("Evaluation.txt",true)
       fw.write("Query: "+query_id+"\n")
       fw.write("Precision: "+Precision+"\n")
@@ -68,6 +80,7 @@ object Evaluation {
       fw.write("F1: "+F1+"\n")
       fw.close()
     }
+    //writer.close()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
     MAP = MAP.toDouble/docs_retrieved.size
     println("MAP: "+MAP)
   }
