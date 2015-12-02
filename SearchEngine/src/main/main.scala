@@ -20,7 +20,6 @@ object main {
   var minHeapsTerm = new mutable.ArrayBuffer[mutable.PriorityQueue[(Double,String)]]()
 
   // binary relevance judgement
-  /*
   def qrels(topicNumToTitle: mutable.LinkedHashMap[String, String]): Unit = {
     val qrelStream = DocStream.getStream("Tipster/qrels")
     val qrels = scala.io.Source.fromInputStream(qrelStream).getLines()
@@ -45,6 +44,7 @@ object main {
     }
 
     /************* TESTING QRELS *****************/
+    /*
     for ((topicNum, topicTitle) <- topicNumToTitle) {
       println("topic num: " + topicNum)
       println("topic: " + topicTitle)
@@ -59,8 +59,64 @@ object main {
       }
       println("")
     }
+    */
+
+    // testing for term freq
+    val heapTermFile = new File("qrelHeapTerm.txt")
+    val htbw = new BufferedWriter(new FileWriter(heapTermFile))
+    var heapNumTerm = 0
+
+    var sumAPs = 0
+    // iterate over all queries
+    for ((_, topics) <- topicNumToTitle) {
+      val minHeap = minHeapsTerm(heapNumTerm)
+      htbw.write("query: " + topics + "\n")
+
+      // get qrels documents for each query
+      val relevant = topicToRelevant.get(topics) // qrels - docs w/ 1
+      val irrelevant = topicToIrrelevant.get(topics) // qrels - docs w/ 0
+
+      var relevantInHeap = 0 // TP
+      var irrelevantInHeap = 0 // FP
+
+      var numeratorAP = 0
+
+      for (doc <- minHeap.takeRight(100)) {
+        var pRel = 0
+        if (relevant.contains(doc._2)) {
+          relevantInHeap += 1
+          pRel = 1
+        } else if (irrelevant.contains(doc._2)) {
+          irrelevantInHeap += 1
+        }
+
+        // AP/MAP calculation
+        val currPrecision = relevantInHeap / (relevantInHeap + irrelevantInHeap)
+        numeratorAP += pRel * currPrecision
+      }
+
+      // FN
+      val FN = relevant.size - relevantInHeap
+
+      val precision = relevantInHeap / (relevantInHeap + irrelevantInHeap)
+      val recall = relevantInHeap / (relevantInHeap + FN)
+      val f1 = 2 / ((1 / precision) + (1 / recall))
+      val AP = numeratorAP / (relevantInHeap + FN)
+      sumAPs += AP
+
+      htbw.write("num relevant in heap: " + relevantInHeap + "\n")
+      htbw.write("num irrelevant in heap: " + irrelevantInHeap + "\n")
+      htbw.write("num in heap in the qrels: " + relevantInHeap + irrelevantInHeap + "\n")
+      htbw.write("precision: " + precision)
+      htbw.write("recall: " + recall)
+      htbw.write("f1: " + f1)
+      htbw.write("\n")
+      heapNumTerm += 1
+    }
+
+    var MAP = sumAPs / topicNumToTitle.size
+    htbw.write("MAP: " + MAP + "\n")
   }
-  */
 
   def main(args: Array[String]) {
 
@@ -298,15 +354,19 @@ object main {
     // TODO: output results to a file - esp when given final 10 test queries
     /*
     var heapCount = 1
-    for (minHeap <- minHeapsLang; (_, topics) <- topicsNumToTitle) {
-       val heapFile = new File("heaps-" + heapCount.toString() + ".txt")
+    var heapNumTerm = 0
+    val minHeap = minHeapsLang(heapNumTerm)
+    val heapFile = new File("heaps-" + heapCount.toString() + ".txt")
+    for ((num, topics) <- topicsNumToTitle) {
        val hbw = new BufferedWriter(new FileWriter(heapFile))
 
-       hbw.write("query: " + topics + "\n")
+       var rank = 1
        for (doc <- minHeap.takeRight(100) {
-        hbw.write(doc._2 + "\n")
+        hbw.write(num + " " + rank.toString + " " + doc._2 + "\n")
+        rank += 1
        }
        heapCount += 1
+       heapNumTerm += 1
     }
      */
 
@@ -341,8 +401,11 @@ object main {
 
     println("printed heaps")
 
+    println("done qrels")
+    qrels(topicNumToTitle)
+
     //Evaluation.evaluate(minHeapsLang)
-    Evaluation.evaluate(minHeapsTerm)
+    //Evaluation.evaluate(minHeapsTerm)
 
   }
 
