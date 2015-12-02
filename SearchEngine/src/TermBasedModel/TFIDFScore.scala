@@ -17,18 +17,18 @@ object TFIDFScore {
     // val rdfs =
     
     // log term frequencies
-    tfs.mapValues(m => m.mapValues { v => log2( (v.toDouble+1.0) / tfsSum ) })
+    //tfs.mapValues(m => m.mapValues { v => log2( (v.toDouble+1.0) / tfsSum ) })
     // inverse doc frequencies
-    dfs.mapValues(m => m.mapValues ( log2(docsN) - log2(_) ) )
+    //dfs.mapValues(m => m.mapValues ( log2(docsN) - log2(_) ) )
     
     var lm = mutable.LinkedHashMap[String, Double]()
     for ((q, m) <- tfs) {
       var sumTFIDF = 0.0
       for ((k, f) <- m) {
         // first implementation:
-        // val mult = log2(1+f) * log2( docsN / dfs(q).getOrElse(k, 0).toDouble )
+        val mult = log2(1+f) * log2( docsN / dfs(q).getOrElse(k, 0.0) )
         // second implementation:
-        val mult = f * dfs(q).getOrElse(k, 0.0)
+        //val mult = f * dfs(q).getOrElse(k, 0.0)
         sumTFIDF += mult
       }
       lm(q) = sumTFIDF
