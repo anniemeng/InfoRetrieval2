@@ -68,7 +68,7 @@ object main {
 
     var sumAPs = 0
     // iterate over all queries
-    for ((_, topics) <- topicNumToTitle) {
+    for ((topics, _) <- topicNumToTitle) {
       val minHeap = minHeapsTerm(heapNumTerm)
       htbw.write("query: " + topics + "\n")
 
@@ -156,20 +156,19 @@ object main {
         // get topic number and query
         val num = numParts(1).split("\n")(0).trim().substring(1) // strip the 0
         val title = topicParts(1).split("\n")(0).trim()
-        println("title before: " + title)
-        println("title after: " + title.replaceAll("[^A-Za-z0-9 ]", ""))
-        topicNumToTitle(num) = title
+        val newTitle = title.replaceAll("[^A-Za-z0-9 .'\\/-]", "").replaceAll("[\\/-]", " ").replaceAll("  ", " ").replaceAll("  ", " ")
+        topicNumToTitle(num) = newTitle
 
         // collect query terms (individual words in each query) for general access later on
-        val terms = title.split(" ")
+        val terms = newTitle.split(" ")
         for (term <- terms) {
-          queryTerms += term.replaceAll("[^A-Za-z0-9]", "")
+          queryTerms += term
         }
       }
     }
 
     // TESTING STRIPPING THE QUERY TERM
-    //return
+    // return
 
     // Initialize min heaps for each query
     val query_count = topicNumToTitle.size
@@ -264,12 +263,10 @@ object main {
         val qterms = topic.split(" ")
         val map = queryTermsNumDocuments.getOrElse(topic, mutable.LinkedHashMap[String, Int]())
         for (term <- qterms) {
-          val termNew = term.replaceAll("[^A-Za-z0-9]", "")
-
           // set num doc to 0 if query term not in
-          val curr = map.getOrElse(termNew, 0)
-          val additional = if (qtfs.getOrElse(termNew, 0) > 0) 1 else 0
-          map(termNew) = curr + additional
+          val curr = map.getOrElse(term, 0)
+          val additional = if (qtfs.getOrElse(term, 0) > 0) 1 else 0
+          map(term) = curr + additional
         }
         queryTermsNumDocuments(topic) = map
       }
@@ -327,10 +324,9 @@ object main {
       // filter map of all tokens to only those in query
       for ((_, topic) <- topicNumToTitle) {
         val qterms = topic.split(" ")
-        val qtermsModify = for (qterm <- qterms) yield qterm.replaceAll("[^A-Za-z0-9]", "")
         val qtfs = MutMap[String, Int]()
-        qtermsModify.foreach { q => qtfs(q) = 0 }
-        tfs.filterKeys(qtermsModify.toSet).foreach{case (k,v) => qtfs(k) = v}
+        qterms.foreach { q => qtfs(q) = 0 }
+        tfs.filterKeys(qterms.toSet).foreach{case (k,v) => qtfs(k) = v}
         queryTermsToFreq(topic) = qtfs
       }
 
