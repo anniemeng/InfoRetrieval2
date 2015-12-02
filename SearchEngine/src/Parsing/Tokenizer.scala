@@ -4,7 +4,7 @@ import main._
 
 object Tokenizer {
   def tokenize (text: String) : List[String] =
-    text.toLowerCase.split("[ .,;:?!\t\n\r\f-]+").toList
+    //text.toLowerCase.split("[ .,;:?!\t\n\r\f-]+").toList
     // TODO: STOP WORDS
-    //text.toLowerCase.split("[ .,;:?!\t\n\r\f-]+").toList.filterNot(main.stopWords)
+    text.toLowerCase.split("[ .,;:?!\t\n\r\f-]+").toList.filterNot(main.stopWords)
 }
