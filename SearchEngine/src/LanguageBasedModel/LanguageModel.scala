@@ -25,7 +25,7 @@ object LanguageModel {
       for((term, freq) <- occurence){
         /*Score = Score + main.log2(1 + (1-JMlambda) * (freq.toDouble/doc_word_count) + 
             (JMlambda) * (wordmap.getOrElse(term, 0).toDouble/coll_word_count))*/
-        var DirConst = 2000  
+        var DirConst = 500
         var DirichletDenom : Double = doc_word_count+DirConst
         var DirichletNum : Double = freq+((DirConst)*(wordmap.getOrElse(term, 0.0)/coll_word_count))
         Score = Score + main.log2(1+ (DirichletNum.toDouble/DirichletDenom))

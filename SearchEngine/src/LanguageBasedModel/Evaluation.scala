@@ -92,9 +92,9 @@ object Evaluation {
     MAP = MAP.toDouble/queries
     
     println("MAP: "+MAP)
-    println("AvgPrecision: "+(AvgPrecision/queries));
-    println("AvgRecall: "+(AvgRecall/queries));
-    println("AvgF1: "+(AverageF1/queries));
+    println("AvgPrecision: "+(AvgPrecision/queries))
+    println("AvgRecall: "+(AvgRecall/queries))
+    println("AvgF1: "+(AverageF1/queries))
     
   }
 }
