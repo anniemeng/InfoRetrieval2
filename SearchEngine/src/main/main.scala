@@ -6,7 +6,6 @@ import java.io._
 import Parsing._
 import LanguageBasedModel._
 import TermBasedModel._
-import scala.util.control.Breaks._
 
 import collection.immutable.Map
 import collection.mutable.{Map=>MutMap}
@@ -34,10 +33,7 @@ object main {
 
     // all terms of all queries
     var queryTerms = Set[String]()
-    for (topicBody <- topics) {
-      if (topicNumToTitle.size == 40) {
-        break
-      }
+    for (topicBody <- topics.dropRight(11)) {
       val numParts = topicBody.split("Number:")
       val topicParts = topicBody.split("Topic:")
 
@@ -61,6 +57,7 @@ object main {
         }
       }
     }
+    println(topicNumToTitle.size)
 
      /******************************
       * 2) INITIALIZE MIN HEAP FOR EACH QUERY
