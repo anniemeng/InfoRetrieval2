@@ -16,25 +16,20 @@ object Evaluation {
     var AverageF1 : Double = 0.0
     var avgPrecisionAtRank : Double = 0.0
     var MAP : Double = 0.0
-    var Alpha : Double = 0.5
-    var Beta : Double = 1 - Alpha
+    val Alpha : Double = 0.5
+    val Beta : Double = 1 - Alpha
     var RelevantDocs = 0
     var RetrievedRelevant = 0
     var query_id : String = ""
     var docs_retrieved = new mutable.ArrayBuffer[mutable.ArrayBuffer[String]]()
     var docs_scanned : Int = 0
-    //var writer : FileWriter  = new FileWriter("EvaluateInsight.txt",true)
-    
+
     for(heap <- heaps){
       val heap_list : List[(Double,String)] = heap.toList.sortWith(_._1 > _._1)
-      //writer.write("Docs "+heap_list+"\n")
       var buf = heap_list.map( x => x._2).to[mutable.ArrayBuffer]
       docs_retrieved += buf
     }
-    
-    //writer.write("Docs: "+docs_retrieved+"\n");
-    
-      
+
     val buffRead = new BufferedReader(new FileReader("Tipster/qrels"))
     var line : String = buffRead.readLine()
     var qrels = line.split(" ")
@@ -46,9 +41,9 @@ object Evaluation {
       RetrievedRelevant = 0
       avgPrecisionAtRank = 0.0
       docs_scanned = 0
+
       while(line  != null && query_id == qrels(0)){
         val doc : String = qrels(2).filter(_.isLetterOrDigit)
-        //writer.write("Doc: "+doc+"\n")
         if(qrels(3) == "1"){
           RelevantDocs += 1 //(TP+FN)
           qrel_docs += doc
@@ -59,14 +54,13 @@ object Evaluation {
       }
       
       for(doc <- docs_retrieved(counter)){
-        //writer.write("Checking with doc :"+doc+"\n")
         docs_scanned += 1
         if(qrel_docs.contains(doc)){
           RetrievedRelevant += 1 //(TP)
           avgPrecisionAtRank += (RetrievedRelevant.toDouble/docs_scanned)
-          //writer.write("Present!! "+RetrievedRelevant+"\n")
         }
       }
+
       if(RetrievedRelevant != 0)
         avgPrecisionAtRank = avgPrecisionAtRank/RetrievedRelevant
       MAP += avgPrecisionAtRank
@@ -74,26 +68,28 @@ object Evaluation {
       Precision = RetrievedRelevant.toDouble/docs_scanned
       Recall = RetrievedRelevant.toDouble/RelevantDocs
       AvgPrecision += Precision
-      AvgRecall += Recall 
+      AvgRecall += Recall
+
       if(Precision == 0 && Recall == 0)
         F1 = 0
       else
-        F1 = ((Beta*Beta+1)*Precision*Recall)/(Beta*Beta*Precision+Recall)
+        F1 = ((Beta * Beta + 1) * Precision * Recall)/(Beta * Beta * Precision + Recall)
+
       AverageF1 += F1
-      val fw = new FileWriter("Evaluation"+ filename+".txt",true)
-      fw.write("Query: "+query_id+"\n")
-      fw.write("Precision: "+Precision+"\n")
-      fw.write("Recall: "+Recall+"\n")
-      fw.write("F1: "+F1+"\n")
+      val fw = new FileWriter("Evaluation" + filename + ".txt",true)
+      fw.write("Query: "+ query_id + "\n")
+      fw.write("Precision: " + Precision + "\n")
+      fw.write("Recall: " + Recall + "\n")
+      fw.write("F1: " + F1 + "\n")
       fw.close()
     }
-    //writer.close()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
     MAP = MAP.toDouble/counter
-    
-    println("MAP: "+MAP)
-    println("AvgPrecision: "+(AvgPrecision/counter))
-    println("AvgRecall: "+(AvgRecall/counter))
-    println("AvgF1: "+(AverageF1/counter))
+
+    println("Model type: " + filename)
+    println("MAP: " + MAP)
+    println("AvgPrecision: " + (AvgPrecision/counter))
+    println("AvgRecall: " + (AvgRecall/counter))
+    println("AvgF1: " + (AverageF1/counter))
     
   }
 }

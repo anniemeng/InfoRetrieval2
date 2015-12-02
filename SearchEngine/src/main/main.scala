@@ -220,6 +220,9 @@ object main {
     htbw.close()
     hlbw.close()
 
+    /******************************
+      * 6) EVALUATION
+      ******************************/
     Evaluation.evaluate(minHeapsLang, "lang")
     Evaluation.evaluate(minHeapsTerm, "term")
   }
