@@ -5,9 +5,9 @@ import main._
 import collection.mutable.LinkedHashMap
 import scala.collection.mutable
 
-class TFScore {
+object TFScore {
 
-  def score(tfs: mutable.LinkedHashMap[String, Map[String, Int]], doc_id: String) {
+  def score(tfs: mutable.LinkedHashMap[String, mutable.Map[String, Int]], doc_id: String) {
     val scores = tfs.map{ case (q, m) => (q, m.foldLeft(0)(_+_._2)) }
     
     var counter = 0

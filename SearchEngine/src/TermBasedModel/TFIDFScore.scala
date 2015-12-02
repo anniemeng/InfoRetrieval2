@@ -5,10 +5,10 @@ import main._
 import collection.mutable.LinkedHashMap
 import scala.collection.mutable
 
-class TFIDFScore {
+object TFIDFScore {
   
   // input: tf(w,d), df(w), n, doc_id
-  def score(tfs: mutable.LinkedHashMap[String, Map[String, Int]],
+  def score(tfs: mutable.LinkedHashMap[String, mutable.Map[String, Int]],
             dfs: mutable.LinkedHashMap[String, Map[String, Int]],
             docsN: Int,
             doc_id: String) {

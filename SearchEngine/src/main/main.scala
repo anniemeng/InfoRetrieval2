@@ -20,7 +20,6 @@ object main {
   var minHeapsTerm = new mutable.ArrayBuffer[mutable.PriorityQueue[(Double,String)]]()
 
   // binary relevance judgement
-  /*
   def qrels(topicNumToTitle: mutable.LinkedHashMap[String, String]): Unit = {
     val qrelStream = DocStream.getStream("Tipster/qrels")
     val qrels = scala.io.Source.fromInputStream(qrelStream).getLines()
@@ -45,6 +44,7 @@ object main {
     }
 
     /************* TESTING QRELS *****************/
+    /*
     for ((topicNum, topicTitle) <- topicNumToTitle) {
       println("topic num: " + topicNum)
       println("topic: " + topicTitle)
@@ -59,22 +59,79 @@ object main {
       }
       println("")
     }
+    */
+
+    // testing for term freq
+    val heapTermFile = new File("qrelHeapTerm.txt")
+    val htbw = new BufferedWriter(new FileWriter(heapTermFile))
+    var heapNumTerm = 0
+
+    var sumAPs = 0
+    // iterate over all queries
+    for ((_, topics) <- topicNumToTitle) {
+      val minHeap = minHeapsTerm(heapNumTerm)
+      htbw.write("query: " + topics + "\n")
+
+      // get qrels documents for each query
+      val relevant = topicToRelevant.get(topics) // qrels - docs w/ 1
+      val irrelevant = topicToIrrelevant.get(topics) // qrels - docs w/ 0
+
+      var relevantInHeap = 0 // TP
+      var irrelevantInHeap = 0 // FP
+
+      var numeratorAP = 0
+
+      for (doc <- minHeap.takeRight(100)) {
+        var pRel = 0
+        if (relevant.contains(doc._2)) {
+          relevantInHeap += 1
+          pRel = 1
+        } else if (irrelevant.contains(doc._2)) {
+          irrelevantInHeap += 1
+        }
+
+        // AP/MAP calculation
+        val currPrecision = relevantInHeap / (relevantInHeap + irrelevantInHeap)
+        numeratorAP += pRel * currPrecision
+      }
+
+      // FN
+      val FN = relevant.size - relevantInHeap
+
+      val precision = relevantInHeap / (relevantInHeap + irrelevantInHeap)
+      val recall = relevantInHeap / (relevantInHeap + FN)
+      val f1 = 2 / ((1 / precision) + (1 / recall))
+      val AP = numeratorAP / (relevantInHeap + FN)
+      sumAPs += AP
+
+      htbw.write("num relevant in heap: " + relevantInHeap + "\n")
+      htbw.write("num irrelevant in heap: " + irrelevantInHeap + "\n")
+      htbw.write("num in heap in the qrels: " + relevantInHeap + irrelevantInHeap + "\n")
+      htbw.write("precision: " + precision)
+      htbw.write("recall: " + recall)
+      htbw.write("f1: " + f1)
+      htbw.write("\n")
+      heapNumTerm += 1
+    }
+
+    var MAP = sumAPs / topicNumToTitle.size
+    htbw.write("MAP: " + MAP + "\n")
   }
-  */
 
   def main(args: Array[String]) {
 
     // TODO: let user specify how many n best queries they want
 
-    /************* TESTING - WRITE OUTPUT TO FILE  *****************/
-    //val file = new File("output.txt")
-    //val bw = new BufferedWriter(new FileWriter(file))
-
-    // 1) GATHERING QUERIES
+    /******************************
+     * 1) GATHERING QUERIES
+     ********************************/
     val topicStream = DocStream.getStream("Tipster/topics")
     val topics = scala.io.Source.fromInputStream(topicStream).mkString.split("</top>")
 
+    // topic number to query
     val topicNumToTitle = mutable.LinkedHashMap[String, String]() // preserve order
+
+    // all terms of all queries
     var queryTerms = Set[String]()
     for (topicBody <- topics) {
       val numParts = topicBody.split("Number:")
@@ -82,7 +139,7 @@ object main {
 
       if (numParts.length > 1 && topicParts.length > 1) {
         // get topic number and query
-        val num = numParts(1).split("\n")(0).trim().substring(1)
+        val num = numParts(1).split("\n")(0).trim().substring(1) // strip the 0
         val title = topicParts(1).split("\n")(0).trim()
         topicNumToTitle(num) = title
 
@@ -93,8 +150,6 @@ object main {
         }
       }
     }
-
-    // TODO: replace query terms non-alphanumeric terms
 
     // Initialize min heaps for each query
     val query_count = topicNumToTitle.size
@@ -131,16 +186,25 @@ object main {
     return
     */
 
-    // 2) PROCESS DOCUMENT STREAM
-
+    /******************************
+     * 2) PROCESS DOCUMENT STREAM
+     ******************************/
     /* FIRST PASS
      * 1) Get total number of words in general
-     * 2) Get query term frequency for all documents in the collection
+     * 2) Get total number of documents in collection
+     * 3) Get query term frequency for all documents in the collection
+     * 4) Get number of documents that each query term appears in for the whole collection
      */
+
+    // total number of words in collection - LANG MODEL
     var numWordsCollection = 0
+
+    // number of documents in collection - TERM MODEL
+    var numDocuments = 0
 
     // query terms freq for WHOLE document collection - LANG MODEL
     val queryTermsFreqTotal = mutable.LinkedHashMap[String, Int]()
+    queryTerms.foreach { t => queryTermsFreqTotal(t) = 0 }
 
     // number of documents that have each query term for WHOLE document - TERM MODEL
     val queryTermsNumDocuments = mutable.LinkedHashMap[String, mutable.LinkedHashMap[String, Int]]()
@@ -149,21 +213,22 @@ object main {
     sw.start
 
     var tipster = new TipsterCorpusIterator("Tipster/zips")
-    var numDocuments = 0
-    println("has next: " + tipster.hasNext)
     while (tipster.hasNext) {
       val doc = tipster.next()
+
       numDocuments += 1
-      // total number of words in collection
       numWordsCollection += doc.tokens.length
 
       // query term frequency
       // frequency of all tokens in document
       val tfs : Map[String,Int]= doc.tokens.groupBy(identity).mapValues(l => l.length)
-      // log frequency of all tokens in document
+
       // TODO: consider other transformations like square root
-      //val sum = tfs.values.sum.toDouble
-      //val logtf : Map[String,Double] = tfs.mapValues( v => log2( (v.toDouble+1.0) / sum) )
+      /*
+      // log frequency of all tokens in document
+      val sum = tfs.values.sum.toDouble
+      val logtf : Map[String,Double] = tfs.mapValues( v => log2( (v.toDouble+1.0) / sum) )
+      */
 
       // filter map of all tokens to only those in query
       val qtfs = tfs.filterKeys(queryTerms)
@@ -180,10 +245,11 @@ object main {
         val map = queryTermsNumDocuments.getOrElse(topic, mutable.LinkedHashMap[String, Int]())
         for (term <- qterms) {
           val termNew = term.replaceAll("[^A-Za-z0-9]", "")
-          if (qtfs.getOrElse(termNew, 0) > 0) {
-            val curr = map.getOrElse(termNew, 0)
-            map(termNew) = curr + 1
-          }
+
+          // set num doc to 0 if query term not in
+          val curr = map.getOrElse(termNew, 0)
+          val additional = if (qtfs.getOrElse(termNew, 0) > 0) 1 else 0
+          map(termNew) = curr + additional
         }
         queryTermsNumDocuments(topic) = map
       }
@@ -211,8 +277,6 @@ object main {
     return*/
 
 
-
-
     /* SECOND PASS
      * 1) Find word count of document
      * 2) Get frequency of each query term in the document for all queries
@@ -226,11 +290,12 @@ object main {
     //val testQueryTerms = mutable.LinkedHashMap[String, Int]()
 
     tipster = new TipsterCorpusIterator("Tipster/zips")
-    println("has next: " + tipster.hasNext)
     while (tipster.hasNext) {
       val doc = tipster.next()
+
       // get word count of document
       val numWordsDoc = doc.tokens.length
+      val docId = doc.name
 
       // get frequency of each term for query terms
       // for each query, get a word in the query -> frequency
@@ -245,14 +310,14 @@ object main {
         val qtermsModify = for (qterm <- qterms) yield qterm.replaceAll("[^A-Za-z0-9]", "")
         val qtfs = MutMap[String, Int]()
         qtermsModify.foreach { q => qtfs(q) = 0 }
-        tfs.filter(qtermsModify.toSet).foreach{case (k,v) => qtfs(k) = v}
+        tfs.filterKeys(qtermsModify.toSet).foreach{case (k,v) => qtfs(k) = v}
         queryTermsToFreq(topic) = qtfs
       }
 
-      val docId = doc.name
       // PASS TO MODEL
-      LanguageModel.smoothing(queryTermsToFreq, docId, queryTermsFreqTotal, numWordsDoc, numWordsCollection)
-      // pass queryTermsToFreq, queryTermsNumDocuments, docId, (numDocuments)
+      //LanguageModel.smoothing(queryTermsToFreq, docId, queryTermsFreqTotal, numWordsDoc, numWordsCollection)
+      TFScore.score(queryTermsToFreq, docId)
+      // TFIDFScore.score(queryTermsToFreq, queryTermsNumDocuments, numDocuments, docId)
 
       /************* TESTING SECOND PASS *****************/
       /*
@@ -279,41 +344,63 @@ object main {
     }
     */
 
-    /************* TESTING - WRITE OUTPUT TO FILE  *****************/
-    //bw.close()
-    //return
-
     // TODO: output results to a file - esp when given final 10 test queries
     /*
     var heapCount = 1
-    for (minHeap <- minHeapsLang; (_, topics) <- topicsNumToTitle) {
-       val heapFile = new File("heaps-" + heapCount.toString() + ".txt")
+    var heapNumTerm = 0
+    val minHeap = minHeapsLang(heapNumTerm)
+    val heapFile = new File("heaps-" + heapCount.toString() + ".txt")
+    for ((num, topics) <- topicsNumToTitle) {
        val hbw = new BufferedWriter(new FileWriter(heapFile))
 
-       hbw.write("query: " + topics + "\n")
+       var rank = 1
        for (doc <- minHeap.takeRight(100) {
-        hbw.write(doc._2 + "\n")
+        hbw.write(num + " " + rank.toString + " " + doc._2 + "\n")
+        rank += 1
        }
        heapCount += 1
+       heapNumTerm += 1
     }
      */
 
     /************* TESTING - LANG HEAP  *****************/
-    val heapFile = new File("heaps.txt")
-    val hbw = new BufferedWriter(new FileWriter(heapFile))
-    var heapNum = 0
+    /*
+    val heapLangFile = new File("heapsLang.txt")
+    val hlbw = new BufferedWriter(new FileWriter(heapLangFile))
+    var heapNumLang = 0
     for ((_, topics) <- topicNumToTitle) {
-      val minHeap = minHeapsLang(heapNum)
-      hbw.write("query: " + topics + "\n")
+      val minHeap = minHeapsLang(heapNumLang)
+      hlbw.write("query: " + topics + "\n")
       for (doc <- minHeap.takeRight(100)) {
-        hbw.write(doc._2 + "\n")
+        hlbw.write(doc._2 + "\n")
       }
-      hbw.write("\n")
-      heapNum += 1
+      hlbw.write("\n")
+      heapNumLang += 1
+    }*/
+
+    /************* TESTING - TERM HEAP  *****************/
+    /*
+    val heapTermFile = new File("heapsTerm.txt")
+    val htbw = new BufferedWriter(new FileWriter(heapTermFile))
+    var heapNumTerm = 0
+    for ((_, topics) <- topicNumToTitle) {
+      val minHeap = minHeapsTerm(heapNumTerm)
+      htbw.write("query: " + topics + "\n")
+      for (doc <- minHeap.takeRight(100)) {
+        htbw.write(doc._2 + "\n")
+      }
+      htbw.write("\n")
+      heapNumTerm += 1
     }
+    */
 
     println("printed heaps")
+
+    //println("done qrels")
+    //qrels(topicNumToTitle)
+
     Evaluation.evaluate(minHeapsLang)
+    Evaluation.evaluate(minHeapsTerm)
 
   }
 
