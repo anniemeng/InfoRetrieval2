@@ -5,7 +5,7 @@ import main._
 import java.io._
 
 object LanguageModel {
-  def smoothing(qmap : mutable.LinkedHashMap[String, mutable.Map[String, Int]],
+  def smoothing(qmap : mutable.LinkedHashMap[String, mutable.Map[String, Double]],
                 doc_id : String,
                 wordmap : mutable.LinkedHashMap[String, Int],
                 doc_word_count : Int,
