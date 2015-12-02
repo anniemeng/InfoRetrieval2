@@ -7,13 +7,15 @@ import scala.collection.mutable
 
 object TFScore {
 
+  // input: term frequencies, sum of terms in document, doc_id
   def score(tfs: mutable.LinkedHashMap[String, mutable.Map[String, Double]],
       tfsSum: Double,
       doc_id: String) {
     
-    //transform to ltfs:
+    // transform to log-term frequencies
     tfs.mapValues(m => m.mapValues { v => log2( (v.toDouble+1.0) / tfsSum ) })
     
+    // sum over all query terms = score of documents
     val scores = tfs.map{ case (q, m) => (q, m.foldLeft(0.0)(_+_._2)) }
     
     var counter = 0

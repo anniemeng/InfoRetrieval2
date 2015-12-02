@@ -14,21 +14,13 @@ object TFIDFScore {
             docsN: Int,
             doc_id: String) {
     
-    // val rdfs =
-    
-    // log term frequencies
-    //tfs.mapValues(m => m.mapValues { v => log2( (v.toDouble+1.0) / tfsSum ) })
-    // inverse doc frequencies
-    //dfs.mapValues(m => m.mapValues ( log2(docsN) - log2(_) ) )
-    
     var lm = mutable.LinkedHashMap[String, Double]()
     for ((q, m) <- tfs) {
       var sumTFIDF = 0.0
       for ((k, f) <- m) {
-        // first implementation:
+        // product of log-tf and log-idf
         val mult = log2(1+f) * log2( docsN / dfs(q).getOrElse(k, 0.0) )
-        // second implementation:
-        //val mult = f * dfs(q).getOrElse(k, 0.0)
+        // sum over all terms of one query = score of document
         sumTFIDF += mult
       }
       lm(q) = sumTFIDF
