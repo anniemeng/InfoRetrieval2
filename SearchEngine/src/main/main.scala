@@ -207,7 +207,7 @@ object main {
 
       // get frequency of each term for query terms
       // for each query, get a word in the query -> frequency
-      val queryTermsToFreq = mutable.LinkedHashMap[String, MutMap[String, Int]]()
+      val queryTermsToFreq = mutable.LinkedHashMap[String, MutMap[String, Double]]()
 
       // frequency of all tokens in document
       val tfs : Map[String,Int]= doc.tokens.groupBy(identity).mapValues(l => l.length)
@@ -215,16 +215,16 @@ object main {
       // filter map of all tokens to only those in query
       for ((_, topic) <- topicNumToTitle) {
         val qterms = topic.split(" ")
-        val qtfs = MutMap[String, Int]()
+        val qtfs = MutMap[String, Double]()
         qterms.foreach { q => qtfs(q) = 0 }
         tfs.filterKeys(qterms.toSet).foreach{case (k,v) => qtfs(k) = v}
         queryTermsToFreq(topic) = qtfs
       }
 
       // PASS TO MODEL
-      LanguageModel.smoothing(queryTermsToFreq, docId, queryTermsFreqTotal, numWordsDoc, numWordsCollection)
-      //TFScore.score(queryTermsToFreq, docId)
-      TFIDFScore.score(queryTermsToFreq, queryTermsNumDocuments, numDocuments, docId)
+      //LanguageModel.smoothing(queryTermsToFreq, docId, queryTermsFreqTotal, numWordsDoc, numWordsCollection)
+      TFScore.score(queryTermsToFreq, tfs.values.sum.toDouble, docId)
+      //TFIDFScore.score(queryTermsToFreq, queryTermsNumDocuments, numDocuments, docId)
 
       /************* TESTING SECOND PASS *****************/
       /*
@@ -360,7 +360,7 @@ object main {
     htbw.close()
     */
     println("printed heaps")
-
+    
     Evaluation.evaluate(minHeapsLang, "lang")
     Evaluation.evaluate(minHeapsTerm, "term")
   }
