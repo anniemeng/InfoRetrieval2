@@ -88,11 +88,13 @@ object Evaluation {
       fw.close()
     }
     //writer.close()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-    MAP = MAP.toDouble/docs_retrieved.size
+    val queries = docs_retrieved.size
+    MAP = MAP.toDouble/queries
+    
     println("MAP: "+MAP)
-    println("AvgPrecision: "+AvgPrecision);
-    println("AvgRecall: "+AvgRecall);
-    println("AvgF1: "+AverageF1);
+    println("AvgPrecision: "+(AvgPrecision/queries));
+    println("AvgRecall: "+(AvgRecall/queries));
+    println("AvgF1: "+(AverageF1/queries));
     
   }
 }
