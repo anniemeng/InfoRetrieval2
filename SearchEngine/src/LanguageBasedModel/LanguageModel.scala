@@ -7,7 +7,7 @@ import java.io._
 object LanguageModel {
   def smoothing(qmap : mutable.LinkedHashMap[String, mutable.Map[String, Double]],
                 doc_id : String,
-                wordmap : mutable.LinkedHashMap[String, Int],
+                wordmap : mutable.LinkedHashMap[String, Double],
                 doc_word_count : Int,
                 coll_word_count : Int ): Unit = {
     var JMlambda = 0.1 //Jelinek-Mercer
@@ -27,7 +27,7 @@ object LanguageModel {
             (JMlambda) * (wordmap.getOrElse(term, 0).toDouble/coll_word_count))*/
         var DirConst = 2000  
         var DirichletDenom : Double = doc_word_count+DirConst
-        var DirichletNum : Double = freq+((DirConst)*(wordmap.getOrElse(term, 0).toDouble/coll_word_count))
+        var DirichletNum : Double = freq+((DirConst)*(wordmap.getOrElse(term, 0.0)/coll_word_count))
         Score = Score + main.log2(1+ (DirichletNum.toDouble/DirichletDenom))
       }
       //writer.write("Document "+doc_id+" scored "+Score+" with query "+query)

@@ -107,8 +107,8 @@ object main {
     var numDocuments = 0
 
     // query terms freq for WHOLE document collection - LANG MODEL
-    val queryTermsFreqTotal = mutable.LinkedHashMap[String, Int]()
-    queryTerms.foreach { t => queryTermsFreqTotal(t) = 0 }
+    val queryTermsFreqTotal = mutable.LinkedHashMap[String, Double]()
+    queryTerms.foreach { t => queryTermsFreqTotal(t) = 0.0 }
 
     // number of documents that have each query term for WHOLE document - TERM MODEL
     val queryTermsNumDocuments = mutable.LinkedHashMap[String, mutable.LinkedHashMap[String, Double]]()
@@ -135,18 +135,18 @@ object main {
 
       // add to query term frequency for whole doc collection
       for ((queryTerm, freq) <- qtfs) {
-        val count = queryTermsFreqTotal.getOrElse(queryTerm, 0)
+        val count = queryTermsFreqTotal.getOrElse(queryTerm, 0.0)
         queryTermsFreqTotal(queryTerm) = count + freq
       }
 
       // add to num doc count of each term in query
       for ((_, topic) <- topicNumToTitle) {
         val qterms = topic.split(" ")
-        val map = queryTermsNumDocuments.getOrElse(topic, mutable.LinkedHashMap[String, Int]())
+        val map = queryTermsNumDocuments.getOrElse(topic, mutable.LinkedHashMap[String, Double]())
         for (term <- qterms) {
           // set num doc to 0 if query term not in
-          val curr = map.getOrElse(term, 0)
-          val additional = if (qtfs.getOrElse(term, 0) > 0) 1 else 0
+          val curr = map.getOrElse(term, 0.0)
+          val additional = if (qtfs.getOrElse(term, 0) > 0) 1.0 else 0.0
           map(term) = curr + additional
         }
         queryTermsNumDocuments(topic) = map
@@ -214,7 +214,7 @@ object main {
       for ((_, topic) <- topicNumToTitle) {
         val qterms = topic.split(" ")
         val qtfs = MutMap[String, Double]()
-        qterms.foreach { q => qtfs(q) = 0 }
+        qterms.foreach { q => qtfs(q) = 0.0 }
         tfs.filterKeys(qterms.toSet).foreach{case (k,v) => qtfs(k) = v}
         queryTermsToFreq(topic) = qtfs
       }
