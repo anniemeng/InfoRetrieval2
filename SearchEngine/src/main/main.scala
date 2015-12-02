@@ -170,7 +170,7 @@ object main {
         // get topic number and query
         val num = numParts(1).split("\n")(0).trim().substring(1) // strip the 0
         val title = topicParts(1).split("\n\n")(0).trim()
-        val newTitle = title.replaceAll("[^A-Za-z0-9 \n.'\\/-]", "").replaceAll("[\\/\n-]", " ").replaceAll("  ", " ").replaceAll("  ", " ").replaceAll("    ", " ")
+        val newTitle = title.replaceAll("[^A-Za-z0-9 \n.'\\/-]", "").replaceAll("[\\/\n-]", " ").replaceAll("  ", " ").replaceAll("  ", " ").replaceAll("    ", " ").toLowerCase
         topicNumToTitle(num) = newTitle
 
         // collect query terms (individual words in each query) for general access later on
