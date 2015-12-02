@@ -5,7 +5,8 @@ import java.io._
 import scala.io.Source
 import scala.util.Sorting
 object Evaluation {
-  def evaluate(heaps: mutable.ArrayBuffer[mutable.PriorityQueue[(Double,String)]]) : Unit = {
+  def evaluate(heaps: mutable.ArrayBuffer[mutable.PriorityQueue[(Double,String)]],
+               filename: String) : Unit = {
     var counter : Int = 0
     var Precision : Double = 0.0
     var Recall : Double = 0.0
@@ -73,7 +74,7 @@ object Evaluation {
         F1 = 0
       else
         F1 = ((Beta*Beta+1)*Precision*Recall)/(Beta*Beta*Precision+Recall)
-      val fw = new FileWriter("Evaluation.txt",true)
+      val fw = new FileWriter("Evaluation.txt" + filename,true)
       fw.write("Query: "+query_id+"\n")
       fw.write("Precision: "+Precision+"\n")
       fw.write("Recall: "+Recall+"\n")
