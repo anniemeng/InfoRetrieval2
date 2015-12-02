@@ -250,13 +250,6 @@ object main {
           val curr = map.getOrElse(termNew, 0)
           val additional = if (qtfs.getOrElse(termNew, 0) > 0) 1 else 0
           map(termNew) = curr + additional
-
-          /*
-          if (qtfs.getOrElse(termNew, 0) > 0) {
-            val curr = map.getOrElse(termNew, 0)
-            map(termNew) = curr + 1
-          }
-          */
         }
         queryTermsNumDocuments(topic) = map
       }
@@ -317,7 +310,7 @@ object main {
         val qtermsModify = for (qterm <- qterms) yield qterm.replaceAll("[^A-Za-z0-9]", "")
         val qtfs = MutMap[String, Int]()
         qtermsModify.foreach { q => qtfs(q) = 0 }
-        tfs.filter(qtermsModify.toSet).foreach{case (k,v) => qtfs(k) = v}
+        tfs.filterKeys(qtermsModify.toSet).foreach{case (k,v) => qtfs(k) = v}
         queryTermsToFreq(topic) = qtfs
       }
 
@@ -386,6 +379,7 @@ object main {
     }*/
 
     /************* TESTING - TERM HEAP  *****************/
+    /*
     val heapTermFile = new File("heapsTerm.txt")
     val htbw = new BufferedWriter(new FileWriter(heapTermFile))
     var heapNumTerm = 0
@@ -398,14 +392,15 @@ object main {
       htbw.write("\n")
       heapNumTerm += 1
     }
+    */
 
     println("printed heaps")
 
-    println("done qrels")
-    qrels(topicNumToTitle)
+    //println("done qrels")
+    //qrels(topicNumToTitle)
 
-    //Evaluation.evaluate(minHeapsLang)
-    //Evaluation.evaluate(minHeapsTerm)
+    Evaluation.evaluate(minHeapsLang)
+    Evaluation.evaluate(minHeapsTerm)
 
   }
 
