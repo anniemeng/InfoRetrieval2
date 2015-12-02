@@ -33,7 +33,7 @@ object main {
 
     // all terms of all queries
     var queryTerms = Set[String]()
-    for (topicBody <- topics.dropRight(11)) {
+    for (topicBody <- topics) {
       val numParts = topicBody.split("Number:")
       val topicParts = topicBody.split("Topic:")
 
@@ -57,7 +57,6 @@ object main {
         }
       }
     }
-    println(topicNumToTitle.size)
 
      /******************************
       * 2) INITIALIZE MIN HEAP FOR EACH QUERY
