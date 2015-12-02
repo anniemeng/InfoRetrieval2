@@ -43,12 +43,8 @@ object main {
         val title = topicParts(1).split("\n\n")(0).trim()
         val newTitle = title.replaceAll("[^A-Za-z0-9 \n.'\\/-]", "").replaceAll("[\\/\n-]", " ").replaceAll("  ", " ").replaceAll("  ", " ").replaceAll("    ", " ").toLowerCase
 
-        // TODO: STOP WORDS
         val filtered = newTitle.split(" ").filterNot(stopWords).mkString(" ")
         topicNumToTitle(num) = filtered
-
-        // TODO: comment out if using STOP WORDS
-        //topicNumToTitle(num) = newTitle
 
         // collect query terms (individual words in each query) for general access later on
         val terms = newTitle.split(" ")
